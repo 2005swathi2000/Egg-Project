@@ -156,7 +156,7 @@ export default function Screen5() {
         }
 
         const options = {
-          key: "rzp_test_THKA9eZTARgpKw",
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_THKA9eZTARgpKw",
           amount: Math.round(amountPayable * 100),
           currency: "INR",
           name: "Egg Vending Kiosk",
@@ -182,7 +182,7 @@ export default function Screen5() {
             contact: "9876543210"
           },
           theme: {
-            color: "#EA580C"
+            color: "#F97316"
           },
           modal: {
             ondismiss: function() {
