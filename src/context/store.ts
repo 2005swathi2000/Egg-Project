@@ -12,6 +12,7 @@ export interface AppState {
   doorStatus: DoorStatus;
   isAdActive: boolean;
   adIndex: number;
+  razorpayPaymentId: string;
   
   // Navigation
   setScreen: (screen: number) => void;
@@ -28,6 +29,7 @@ export interface AppState {
   setPaymentSubOption: (option: string | null) => void;
   setUpiId: (id: string) => void;
   setCardDetails: (details: Partial<CardDetails>) => void;
+  setRazorpayPaymentId: (id: string) => void;
   
   // Door Actions
   setDoorStatus: (status: DoorStatus) => void;
@@ -59,6 +61,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   doorStatus: "closed",
   isAdActive: true, // starts with fullscreen advertisement
   adIndex: 0,
+  razorpayPaymentId: "",
 
   setScreen: (screen) => set({ currentScreen: screen }),
   setAdActive: (active) => set({ isAdActive: active }),
@@ -122,6 +125,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setCardDetails: (details) => set((state) => ({
     cardDetails: { ...state.cardDetails, ...details },
   })),
+  setRazorpayPaymentId: (id) => set({ razorpayPaymentId: id }),
 
   setDoorStatus: (status) => set({ doorStatus: status }),
 
@@ -140,6 +144,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     upiId: "",
     cardDetails: initialCardDetails,
     doorStatus: "closed",
-    isAdActive: false, // Don't immediately re-launch the launch ad (or depends on specs: returning to screen 1 restarts the same ad cycle, which starts with isAdActive: true or scheduling).
+    isAdActive: false,
+    razorpayPaymentId: "",
   }),
 }));

@@ -8,7 +8,7 @@ import { CheckCircle2, Receipt } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function DoorAnimation() {
-  const { cart, paymentMethod, doorStatus, setDoorStatus } = useAppStore();
+  const { cart, paymentMethod, razorpayPaymentId, doorStatus, setDoorStatus } = useAppStore();
   const { navigateToHome } = useNavigation();
 
   const [openProgress, setOpenProgress] = useState(0);
@@ -33,9 +33,13 @@ export default function DoorAnimation() {
     
     setFormattedDateTime(`${month} ${day}, ${year} | ${hours}:${minutes} ${ampm}`);
     
-    const randomSuffix = Math.floor(100000 + Math.random() * 900000);
-    setTransactionId(`EGG${year}${String(now.getMonth() + 1).padStart(2, "0")}${String(day).padStart(2, "0")}${randomSuffix}`);
-  }, []);
+    if (razorpayPaymentId) {
+      setTransactionId(razorpayPaymentId);
+    } else {
+      const randomSuffix = Math.floor(100000 + Math.random() * 900000);
+      setTransactionId(`EGG${year}${String(now.getMonth() + 1).padStart(2, "0")}${String(day).padStart(2, "0")}${randomSuffix}`);
+    }
+  }, [razorpayPaymentId]);
 
   // Open door timer progress
   useEffect(() => {

@@ -1,12 +1,31 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAppStore } from "../../context/store";
 import { EGG_TRAYS } from "../../utils/constants";
 import { CreditCard as CardIcon, Wallet as WalletIcon, Landmark, ChevronRight, Check } from "lucide-react";
 
 export default function Screen5() {
   const { cart, paymentMethod, setPaymentMethod, setScreen } = useAppStore();
+
+  // Load Razorpay Script dynamically on mount
+  useEffect(() => {
+    const scriptId = "razorpay-checkout-script";
+    if (document.getElementById(scriptId)) return;
+
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      const existing = document.getElementById(scriptId);
+      if (existing) {
+        document.body.removeChild(existing);
+      }
+    };
+  }, []);
 
   // Accordion open/close state
   const [expandedMethod, setExpandedMethod] = useState<"upi" | "card" | "wallet" | "netbanking" | null>(null);
@@ -113,18 +132,72 @@ export default function Screen5() {
     return false;
   };
 
-  const handlePaymentSubmit = () => {
+  const handlePaymentSubmit = async () => {
     if (!isFormValid()) return;
 
     if (expandedMethod === "upi") {
       setScreen(6); // Navigate to Screen 6 QR Scanner
     } else {
-      // Simulate card / wallet / bank redirect processing
-      setIsProcessing(true);
-      setTimeout(() => {
+      try {
+        setIsProcessing(true);
+        const res = await fetch("/api/razorpay/order", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ amount: amountPayable }),
+        });
+        const data = await res.json();
+        
+        if (!res.ok) {
+          setIsProcessing(false);
+          alert("Failed to initialize Razorpay Order: " + (data.error || "Server error"));
+          return;
+        }
+
+        const options = {
+          key: "rzp_test_THKA9eZTARgpKw",
+          amount: Math.round(amountPayable * 100),
+          currency: "INR",
+          name: "Egg Vending Kiosk",
+          description: `Order Payment for ${cart.reduce((s, i) => s + i.quantity, 0)} trays`,
+          order_id: data.orderId,
+          handler: function (response: any) {
+            setIsProcessing(false);
+            const payId = response.razorpay_payment_id;
+            const store = useAppStore.getState();
+            store.setRazorpayPaymentId(payId);
+            
+            let finalMethod = "RAZORPAY";
+            if (expandedMethod === "card") finalMethod = "CARD";
+            else if (expandedMethod === "wallet") finalMethod = "WALLET";
+            else if (expandedMethod === "netbanking") finalMethod = "NET BANKING";
+            
+            store.setPaymentMethod(finalMethod as any);
+            store.setScreen(7); // Redirect to Screen 7 (Success Page)
+          },
+          prefill: {
+            name: cardHolder || "Vending Customer",
+            email: "customer@eggvending.com",
+            contact: "9876543210"
+          },
+          theme: {
+            color: "#EA580C"
+          },
+          modal: {
+            ondismiss: function() {
+              setIsProcessing(false);
+            }
+          }
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
+      } catch (e: any) {
         setIsProcessing(false);
-        setScreen(7); // Redirect to Screen 7 (Success Page)
-      }, 1500);
+        console.error("Razorpay Checkout Error:", e);
+        alert("Could not load Razorpay Checkout Modal.");
+      }
     }
   };
 
