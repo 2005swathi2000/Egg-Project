@@ -8,13 +8,13 @@ interface CountdownTimerProps {
 }
 
 export default function CountdownTimer({ onComplete }: CountdownTimerProps) {
-  const [secondsLeft, setSecondsLeft] = useState(3);
+  const [secondsLeft, setSecondsLeft] = useState(5);
   const [progress, setProgress] = useState(1); // 1 to 0 for shrinking ring
   const setScreen = useAppStore((state) => state.setScreen);
 
   useEffect(() => {
-    // 3 seconds timer
-    const totalDuration = 3000;
+    // 5 seconds timer to display 5, 4, 3, 2, 1
+    const totalDuration = 5000;
     const intervalTick = 50;
     let elapsed = 0;
 
@@ -23,10 +23,8 @@ export default function CountdownTimer({ onComplete }: CountdownTimerProps) {
       const currentProgress = 1 - elapsed / totalDuration;
       setProgress(Math.max(currentProgress, 0));
 
-      const newSeconds = Math.ceil(3 - elapsed / 1000);
-      if (newSeconds !== secondsLeft) {
-        setSecondsLeft(Math.max(newSeconds, 0));
-      }
+      const newSeconds = Math.ceil(5 - elapsed / 1000);
+      setSecondsLeft(Math.max(newSeconds, 1));
 
       if (elapsed >= totalDuration) {
         clearInterval(interval);

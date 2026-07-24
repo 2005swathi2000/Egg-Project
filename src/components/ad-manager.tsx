@@ -9,23 +9,16 @@ const ADVERTISEMENTS = [
   {
     id: 1,
     type: "image",
-    src: "/images/page_1_img_1.png", // Use extracted images as placeholders
-    title: "Organic Farm Fresh Eggs",
-    subtitle: "Naturally Sourced & Rich in Protein",
+    src: "/images/step1_ad.png",
+    title: "Fresh Eggs",
+    subtitle: "Fresh • Hygiene • Local",
   },
   {
     id: 2,
-    type: "video",
-    src: "/videos/promo.mp4", // Supports actual video path
-    title: "Healthy Hens, Quality Eggs",
-    subtitle: "Watch how we maintain hygiene standards",
-  },
-  {
-    id: 3,
     type: "image",
-    src: "/images/page_3_img_1.png",
-    title: "Freshness Guaranteed",
-    subtitle: "From our nests to your trays directly",
+    src: "/images/page_1_img_1.png",
+    title: "Business One Ad",
+    subtitle: "Premium Delivery & Standard Quality",
   }
 ];
 
@@ -72,12 +65,7 @@ export default function AdManager() {
     setProgress(0);
     setIsVideoLoadingError(false);
 
-    let durationMs = 5000; // Default for posters
-    
-    if (activeAd.type === "video") {
-      // Videos play for actual duration up to 15 seconds
-      durationMs = 15000;
-    }
+    let durationMs = activeAd.id === 2 ? 10000 : 7000; // 10s for business one ad, 7s for initial ad
 
     // Start progress tracking for visual feed
     const intervalTick = 50;
@@ -147,14 +135,12 @@ export default function AdManager() {
         {/* Top Header bar */}
         <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent z-10">
           <span className="text-xs tracking-wider uppercase bg-white/20 px-2 py-1 rounded">Advertisement</span>
-          {activeAd.type === "video" && (
-            <button 
-              onClick={handleSkip}
-              className="px-4 py-1.5 rounded-full bg-white text-black font-semibold text-sm hover:bg-zinc-200 transition active:scale-95"
-            >
-              Skip
-            </button>
-          )}
+          <button 
+            onClick={handleSkip}
+            className="px-4 py-1.5 rounded-full bg-white text-black font-semibold text-sm hover:bg-zinc-200 transition active:scale-95 cursor-pointer"
+          >
+            Skip
+          </button>
         </div>
 
         {/* Media Player Container */}

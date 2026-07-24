@@ -9,6 +9,14 @@ import { AlertCircle, ShoppingCart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TrayType } from "../../types";
 
+const TrayIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={props.className}>
+    {/* Outline shape representing a tray/carton lid box */}
+    <path d="M4 8h16v10a2 2 0 01-2 2H6a2 2 0 01-2-2V8z" />
+    <path d="M2 8h20M6 4h12M6 8V4M18 8V4" />
+  </svg>
+);
+
 export default function Screen3() {
   const { cart, addTrayToCart, removeTrayFromCart, updateQuantity, setScreen } = useAppStore();
   const [warning, setWarning] = useState<string | null>(null);
@@ -55,17 +63,13 @@ export default function Screen3() {
     setIsCartOpen(false);
     setScreen(4); // Navigate to Order Summary
   };
-
   return (
-    <div className="relative flex-1 flex flex-col justify-between bg-[#FAF8F5] select-none overflow-hidden">
-      {/* Decorative header */}
-      <div 
-        className="h-28 bg-cover bg-center flex items-end justify-center pb-2 select-none"
-        style={{ backgroundImage: "url('/images/page_6_img_1.png')" }}
-      >
-        <span className="font-extrabold text-2xl text-amber-950 font-serif drop-shadow-sm select-none">
+    <div className="relative flex-1 flex flex-col justify-between bg-[#FAF8F5] select-none overflow-hidden pb-24">
+      {/* Decorative header - Cursive style with no wood background banner */}
+      <div className="pt-12 pb-4 flex justify-center select-none flex-shrink-0">
+        <h1 className="text-4xl text-[#4A2F13] font-serif italic font-extrabold text-center drop-shadow-sm select-none">
           Fresh Eggs
-        </span>
+        </h1>
       </div>
 
       {/* Warning Toast */}
@@ -153,14 +157,28 @@ export default function Screen3() {
       </div>
 
       {/* Bottom Button Panel */}
-      <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-white via-white to-transparent select-none">
-        <button
-          onClick={() => setIsCartOpen(true)}
-          className="w-full py-4 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-extrabold text-xl rounded-2xl shadow-lg border border-orange-400/50 flex items-center justify-center gap-3 transition select-none cursor-pointer"
-        >
-          <ShoppingCart className="w-5 h-5" />
-          <span>{totalTrays} {totalTrays === 1 ? "Tray" : "Trays"} • View Cart</span>
-        </button>
+      <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-white via-white to-transparent select-none z-20">
+        <div className="w-full h-16 bg-[#F97316] rounded-2xl shadow-lg border border-orange-400/50 flex items-center justify-between px-4 py-2 text-white font-extrabold text-lg select-none">
+          {/* Left Side: Icon and Count */}
+          <div className="flex items-center gap-2.5 pl-2">
+            <TrayIcon className="w-6 h-6 text-white" />
+            <span className="text-xl tracking-wide">{totalTrays} {totalTrays === 1 ? "Tray" : "Trays"}</span>
+          </div>
+
+          {/* Vertical Separator */}
+          <div className="h-8 w-px bg-white/30" />
+
+          {/* Right Side: View Cart button */}
+          <button
+            onClick={() => setIsCartOpen(true)}
+            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/35 active:scale-95 transition px-4 py-2 rounded-xl text-white select-none cursor-pointer"
+          >
+            <span className="text-sm font-extrabold">View Cart</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Bottom Sheet Cart Drawer */}
