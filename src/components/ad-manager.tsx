@@ -163,7 +163,7 @@ export default function AdManager() {
               <img 
                 src={activeAd.src} 
                 alt={activeAd.title}
-                className="w-full h-full object-cover opacity-80"
+                className="w-full h-full object-cover opacity-100"
               />
               
               {/* Visual simulated player layout for videos that fail to load */}
@@ -176,11 +176,7 @@ export default function AdManager() {
             </div>
           )}
 
-          {/* Ad Details overlay */}
-          <div className="absolute bottom-4 left-4 right-4 p-4 rounded-xl bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col gap-1">
-            <h3 className="font-bold text-lg text-amber-500">{activeAd.title}</h3>
-            <p className="text-sm text-zinc-300">{activeAd.subtitle}</p>
-          </div>
+          {/* Details overlay removed to prevent text overlapping */}
         </div>
 
         {/* Bottom Progress Bar */}
