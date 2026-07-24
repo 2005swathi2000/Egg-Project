@@ -1,29 +1,29 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAppStore } from "../../context/store";
 import { EGG_TRAYS } from "../../utils/constants";
 import { ArrowLeft, CreditCard } from "lucide-react";
 import { motion } from "framer-motion";
 
-const SwipeButton = ({ onSwipe }: { onSwipe: () => void }) => {
+const SwipeButton = ({ onSwipe, disabled }: { onSwipe: () => void; disabled: boolean }) => {
   const [isCompleted, setIsCompleted] = useState(false);
 
   return (
-    <div className="w-full max-w-[320px] h-16 bg-orange-100 border border-orange-200 rounded-2xl relative flex items-center justify-between px-2 select-none overflow-hidden shadow-inner">
+    <div className={`w-full max-w-[320px] h-16 bg-orange-100 border border-orange-200 rounded-2xl relative flex items-center justify-between px-2 select-none overflow-hidden shadow-inner ${disabled ? "opacity-60 pointer-events-none" : ""}`}>
       {/* Background slide progress color */}
       <div className="absolute inset-0 bg-[#F97316] opacity-10" />
 
       {/* Track Text */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <span className="text-sm font-black text-orange-950 uppercase tracking-widest animate-pulse">
-          Swipe to Proceed
+          Swipe to Pay
         </span>
       </div>
 
       {/* Draggable handle */}
       <motion.div
-        drag="x"
+        drag={disabled ? false : "x"}
         dragConstraints={{ left: 0, right: 240 }}
         dragElastic={0.1}
         dragMomentum={false}
@@ -52,13 +52,29 @@ const SwipeButton = ({ onSwipe }: { onSwipe: () => void }) => {
 
 export default function Screen4() {
   const { cart, setScreen } = useAppStore();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Load Razorpay Script dynamically on mount
+  useEffect(() => {
+    const scriptId = "razorpay-checkout-script";
+    if (document.getElementById(scriptId)) return;
+
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      const existing = document.getElementById(scriptId);
+      if (existing) {
+        document.body.removeChild(existing);
+      }
+    };
+  }, []);
 
   const handleBack = () => {
     setScreen(3);
-  };
-
-  const handleProceed = () => {
-    setScreen(5); // Proceed to Payment Screen
   };
 
   // Calculations
@@ -69,8 +85,80 @@ export default function Screen4() {
 
   const grandTotal = subtotal;
 
+  const handleProceed = async () => {
+    if (cart.length === 0) return;
+
+    try {
+      setIsProcessing(true);
+      const res = await fetch("/api/razorpay/order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ amount: grandTotal }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setIsProcessing(false);
+        alert("Failed to initialize Razorpay Order: " + (data.error || "Server error"));
+        return;
+      }
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_THKA9eZTARgpKw",
+        amount: Math.round(grandTotal * 100),
+        currency: "INR",
+        name: "Egg Vending Kiosk",
+        description: `Payment for ${cart.reduce((s, i) => s + i.quantity, 0)} egg trays`,
+        order_id: data.orderId,
+        handler: function (response: any) {
+          setIsProcessing(false);
+          const payId = response.razorpay_payment_id;
+          const store = useAppStore.getState();
+          store.setRazorpayPaymentId(payId);
+          store.setPaymentMethod("RAZORPAY" as any);
+          store.setScreen(7); // Go directly to Screen 7 (Success Page)
+        },
+        prefill: {
+          name: "Vending Customer",
+          email: "customer@eggvending.com",
+          contact: "9876543210"
+        },
+        theme: {
+          color: "#F97316"
+        },
+        modal: {
+          ondismiss: function() {
+            setIsProcessing(false);
+          }
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (e: any) {
+      setIsProcessing(false);
+      console.error("Razorpay Checkout Error:", e);
+      alert("Could not load Razorpay Checkout Modal.");
+    }
+  };
+
   return (
     <div className="relative flex-1 flex flex-col justify-between bg-[#FAF8F5] select-none overflow-hidden pb-24">
+      {/* Dynamic Loading Overlay */}
+      {isProcessing && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 select-none">
+          <div className="w-14 h-14 rounded-full border-4 border-orange-500 border-t-transparent animate-spin mb-4" />
+          <span className="text-white font-extrabold text-lg animate-pulse tracking-wide">
+            Initiating Payment...
+          </span>
+          <span className="text-zinc-300 font-semibold text-xs mt-1">
+            Please do not close or reload
+          </span>
+        </div>
+      )}
+
       {/* Decorative header - Cursive style with no wood background banner */}
       <div className="pt-12 pb-4 flex justify-center select-none flex-shrink-0">
         <h1 className="text-4xl text-[#4A2F13] font-serif italic font-extrabold text-center drop-shadow-sm select-none">
@@ -157,7 +245,7 @@ export default function Screen4() {
 
       {/* Bottom Swipe Button Panel */}
       <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-[#FAF8F5] via-[#FAF8F5] to-transparent select-none z-10 flex justify-center">
-        <SwipeButton onSwipe={handleProceed} />
+        <SwipeButton onSwipe={handleProceed} disabled={isProcessing || cart.length === 0} />
       </div>
     </div>
   );
