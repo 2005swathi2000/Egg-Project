@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAppStore } from "../../context/store";
 import { EGG_TRAYS } from "../../utils/constants";
 
 export default function Screen6() {
   const { cart, setScreen } = useAppStore();
+  const [paymentStatus, setPaymentStatus] = useState<"PENDING" | "SUCCESS" | "FAILED">("PENDING");
 
   // Calculations
   const amount = cart.reduce((sum, item) => {
@@ -13,15 +14,51 @@ export default function Screen6() {
     return sum + (tray ? tray.basePrice * item.quantity : 0);
   }, 0);
 
-  // Auto-navigate to Screen 7 (Success Page) after 5 seconds of simulating payment scan
+  // Initialize status on mount and poll server status
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setScreen(7);
-    }, 5000);
-    return () => clearTimeout(timer);
+    const initializePayment = async () => {
+      try {
+        await fetch("/api/payment-status?action=set&status=PENDING");
+      } catch (e) {
+        console.error("Failed to initialize payment:", e);
+      }
+    };
+    initializePayment();
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch("/api/payment-status");
+        const data = await res.json();
+        if (data.status === "SUCCESS") {
+          setPaymentStatus("SUCCESS");
+          clearInterval(interval);
+          setScreen(7); // Proceed to Screen 7 (Success Page)
+        } else if (data.status === "FAILED") {
+          setPaymentStatus("FAILED");
+        }
+      } catch (e) {
+        console.error("Polling error:", e);
+      }
+    }, 1500);
+
+    return () => clearInterval(interval);
   }, [setScreen]);
 
-  const handleCancel = () => {
+  const retryPayment = async () => {
+    setPaymentStatus("PENDING");
+    try {
+      await fetch("/api/payment-status?action=set&status=PENDING");
+    } catch (e) {
+      console.error("Failed to reset payment status:", e);
+    }
+  };
+
+  const handleCancel = async () => {
+    try {
+      await fetch("/api/payment-status?action=set&status=PENDING");
+    } catch (e) {
+      console.error("Failed to reset payment status on cancel:", e);
+    }
     setScreen(5); // Go back to Payment page
   };
 
@@ -42,11 +79,7 @@ export default function Screen6() {
       <div className="flex-1 flex flex-col items-center justify-center px-6 gap-5 select-none min-h-0">
         
         {/* QR Code Dashed Card */}
-        <div 
-          onClick={() => setScreen(7)} // Click QR code to simulate payment completed!
-          className="border border-dashed border-zinc-300 rounded-3xl bg-white p-5 shadow-sm flex items-center justify-center w-72 h-72 cursor-pointer hover:scale-[1.01] active:scale-95 transition"
-          title="Click QR Code to simulate payment success"
-        >
+        <div className="border border-dashed border-zinc-300 rounded-3xl bg-white p-5 shadow-sm flex items-center justify-center w-72 h-72">
           <img 
             src="/images/page_6_img_2.png" 
             alt="Payment QR Code" 
@@ -59,12 +92,28 @@ export default function Screen6() {
           <span className="text-xs font-black text-[#4A2F13]/70 uppercase tracking-widest">Amount</span>
           <span className="font-black text-4xl text-[#4A2F13] mt-1">₹{amount}</span>
           
-          <span className="text-sm font-extrabold text-zinc-500 mt-4 tracking-wide animate-pulse">
-            Waiting for the Payment...
-          </span>
-          <span className="text-xs font-semibold text-zinc-400 mt-1">
-            Please Don't Close the Screen
-          </span>
+          {paymentStatus === "FAILED" ? (
+            <div className="flex flex-col items-center mt-4">
+              <span className="text-sm font-black text-red-500 tracking-wide">
+                Payment Failed or Cancelled
+              </span>
+              <button
+                onClick={retryPayment}
+                className="text-xs font-bold text-orange-500 hover:text-orange-600 underline mt-1.5 cursor-pointer select-none"
+              >
+                Tap to Retry Payment
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center">
+              <span className="text-sm font-extrabold text-zinc-500 mt-4 tracking-wide animate-pulse">
+                Waiting for the Payment...
+              </span>
+              <span className="text-xs font-semibold text-zinc-400 mt-1">
+                Please Don't Close the Screen
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
