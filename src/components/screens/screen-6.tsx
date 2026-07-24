@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useAppStore } from "../../context/store";
 import { EGG_TRAYS } from "../../utils/constants";
 
@@ -12,6 +12,14 @@ export default function Screen6() {
     const tray = EGG_TRAYS.find((t) => t.id === item.id);
     return sum + (tray ? tray.basePrice * item.quantity : 0);
   }, 0);
+
+  // Auto-navigate to Screen 7 (Success Page) after 5 seconds of simulating payment scan
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setScreen(7);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [setScreen]);
 
   const handleCancel = () => {
     setScreen(5); // Go back to Payment page
