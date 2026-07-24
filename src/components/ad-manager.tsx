@@ -46,6 +46,20 @@ export default function AdManager() {
 
   const activeAd = ADVERTISEMENTS[adIndex % ADVERTISEMENTS.length];
 
+  const clearTimers = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+  };
+
+  const handleAdComplete = () => {
+    clearTimers();
+    setAdActive(false);
+  };
+
+  const handleSkip = () => {
+    handleAdComplete();
+  };
+
   // Starts the advertisement playback
   useEffect(() => {
     if (!isAdActive) {
@@ -54,6 +68,7 @@ export default function AdManager() {
       return;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setProgress(0);
     setIsVideoLoadingError(false);
 
@@ -100,20 +115,6 @@ export default function AdManager() {
       clearTimeout(idleTimeout);
     };
   }, [currentScreen, isAdActive, adIndex]);
-
-  const clearTimers = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-  };
-
-  const handleAdComplete = () => {
-    clearTimers();
-    setAdActive(false);
-  };
-
-  const handleSkip = () => {
-    handleAdComplete();
-  };
 
   const handleVideoLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     const videoDuration = e.currentTarget.duration * 1000;

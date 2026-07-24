@@ -74,7 +74,7 @@ export default function Screen6() {
           </div>
           
           <span className="text-xs font-semibold text-zinc-400 mt-1">
-            Please Don't Close the Screen
+            {"Please Don't Close the Screen"}
           </span>
         </div>
       </div>
