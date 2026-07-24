@@ -2,13 +2,9 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const { amount } = await request.json(); // amount in INR
-    const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
-    
-    if (!keyId || !keySecret) {
-      return NextResponse.json({ error: "Razorpay credentials not configured in environment" }, { status: 500 });
-    }
+    const { amount } = await request.json();
+    const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_THKA9eZTARgpKw";
+    const keySecret = process.env.RAZORPAY_KEY_SECRET || "R3xU2LJmVSiVrsnYUSYKuf82";
     
     const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
     
